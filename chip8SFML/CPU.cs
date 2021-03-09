@@ -489,11 +489,10 @@ namespace chip8SFML
             uint dX = (uint)v[x] % 128; //128 is super chip width
             uint dY = (uint)v[y] % 64;  //64 is super chip height
             v[0xf] = 0;
-            int i = 0;
-
+            
             for (uint dIY = 0; dIY < N; dIY++)
             {
-                byte pixels = ram[I+i];
+                byte pixels = ram[I+dIY];
 
                 for (uint dIX = 0; dIX < 8; dIX++)
                 {
@@ -514,14 +513,10 @@ namespace chip8SFML
                     }
 
 
-                    if (dIX > 63) break;
+                    if (dIX+dX > 127) break;
                 }
-                if (dIY > 31) break;
+                if (dIY+dY > 63) break;
 
-                if (i < N)
-                {
-                    i++;
-                }
                 
             }
         }
@@ -550,12 +545,13 @@ namespace chip8SFML
 
         private void setVADD(byte x, byte y)
         {
-            if (v[x] + v[y] > 255)
-                v[0xf] = 1;
-            else
-                v[0xf] = 0;
+            bool setCarry = false;
 
+            if (v[x] + v[y] > 255)  setCarry = true;
+            
             v[x] += v[y];
+
+            v[0xF] = (byte)((setCarry) ? 1 : 0);
         }
 
         private void setVOR(byte x, byte y)
@@ -575,22 +571,25 @@ namespace chip8SFML
 
         private void setVSubXY(byte x, byte y)
         {
-            if (v[x] > v[y])
-                v[0xf] = 1;
-            else
-                v[0xf] = 0;
+            bool setCarry = false;
 
+            if (v[x] > v[y]) setCarry = true;
+            
             v[x] -= v[y];
+
+            v[0xF] = (byte)((setCarry) ? 1 : 0);
         }
 
         private void setVSubYX(byte x, byte y)
         {
+            bool setCarry = false;
             if (v[y] > v[x]) 
-                v[0xf] = 1;
-            else
-                v[0xf] = 0;
+                setCarry = true;
+            
 
             v[x] = (byte)(v[y] - v[x]);
+
+            v[0xF] = (byte)((setCarry) ? 1 : 0);
         }
 
 
@@ -601,8 +600,10 @@ namespace chip8SFML
                 v[x] = v[y];
             }
 
-            v[0xf] = (byte)((v[x] >> 7) & 0b1);
+            byte c = (byte)((v[x] >> 7) & 0b1);
             v[x] = (byte)(v[x] << 1);
+            v[0xF] = c;
+
         }
 
         private void RightShiftX(byte x, byte y)
@@ -612,8 +613,9 @@ namespace chip8SFML
                 v[x] = v[y];
             }
 
-            v[0xf] = (byte)(v[x] & 0b1);
+            byte c = (byte)(v[x] & 0b1);
             v[x] = (byte)(v[x] >> 1);
+            v[0xF] = c;
         }
 
         private void incV(byte x, byte y, byte N)
