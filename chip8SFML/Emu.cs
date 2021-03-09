@@ -95,7 +95,7 @@ namespace chip8SFML
         {
             //init
             mode = new VideoMode(scale * width, scale * height);
-            window = new RenderWindow(mode, "SFML Chip8 test");
+            window = new RenderWindow(mode, "SFML Chip8");
 
             rvMode = new VideoMode(640, 480); //may not need this much, or may need more
             ramViewWin = new RenderWindow(rvMode, "Ram Viewer");
@@ -138,51 +138,6 @@ namespace chip8SFML
             {
                 display[dI] = false;
             }
-
-
-            SystemMsg("Drawing a 3x5 TEST at 1,1.");
-            //T
-            display[1 + (1 * 64)] = true;
-            display[2 + (1 * 64)] = true;
-            display[3 + (1 * 64)] = true;
-            display[2 + (2 * 64)] = true;
-            display[2 + (3 * 64)] = true;
-            display[2 + (4 * 64)] = true;
-            display[2 + (5 * 64)] = true;
-
-            //E
-            display[5 + (1 * 64)] = true;
-            display[6 + (1 * 64)] = true;
-            display[7 + (1 * 64)] = true;
-            display[5 + (2 * 64)] = true;
-            display[5 + (3 * 64)] = true;
-            display[6 + (3 * 64)] = true;
-            display[5 + (4 * 64)] = true;
-            display[5 + (5 * 64)] = true;
-            display[6 + (5 * 64)] = true;
-            display[7 + (5 * 64)] = true;
-
-            //S
-            display[9 + (1 * 64)] = true;
-            display[10 + (1 * 64)] = true;
-            display[11 + (1 * 64)] = true;
-            display[9 + (2 * 64)] = true;
-            display[9 + (3 * 64)] = true;
-            display[10 + (3 * 64)] = true;
-            display[11 + (3 * 64)] = true;
-            display[11 + (4 * 64)] = true;
-            display[11 + (5 * 64)] = true;
-            display[10 + (5 * 64)] = true;
-            display[9 + (5 * 64)] = true;
-
-            //T
-            display[13 + (1 * 64)] = true;
-            display[14 + (1 * 64)] = true;
-            display[15 + (1 * 64)] = true;
-            display[14 + (2 * 64)] = true;
-            display[14 + (3 * 64)] = true;
-            display[14 + (4 * 64)] = true;
-            display[14 + (5 * 64)] = true;
 
             dispPixel = new RectangleShape(new Vector2f(1 * scale, 1 * scale));
             dispPixel.FillColor = dispOn;

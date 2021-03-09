@@ -2,5 +2,6 @@
 # This .gitignore file was automatically created by Microsoft(R) Visual Studio.
 ################################################################################
 
+/chip8SFML/.vs
 /chip8SFML/bin/Debug/netcoreapp3.1
 /chip8SFML/obj
