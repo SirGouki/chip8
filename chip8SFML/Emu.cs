@@ -55,8 +55,8 @@ namespace chip8SFML
 
         //vars for sfml
         uint scale = 4;
-        uint width = 64;
-        uint height = 32;
+        uint width = 128; //chip 8 = 64, super chip = 128
+        uint height = 64; //chip 8 = 32, super chip = 64
         VideoMode mode;
         RenderWindow window;
         VideoMode rvMode;
@@ -86,10 +86,13 @@ namespace chip8SFML
             0xF0, 0x80, 0xF0, 0x80, 0x80  // F
         };
 
-        bool[] display = new bool[64 * 32];
+        bool[] display; 
         Color dispOff = Color.Black;
         Color dispOn = Color.White;
         RectangleShape dispPixel;
+
+        int frames = 60;
+        int fpu = 60;
 
         public Emu()
         {
@@ -115,7 +118,7 @@ namespace chip8SFML
 
             SystemMsg("Setting up CPU ...");
             cpu = new CPU();
-            cpu.SetRAM(ref ram);
+            cpu.InitRAM(ref ram);
             SystemMsg("Done");
 
             //initialize ram
@@ -134,6 +137,7 @@ namespace chip8SFML
             SystemMsg("Ram Initialized.  Font Loaded.");
 
             SystemMsg("Display init beginning");
+            display = new bool[width * height];
             for(int dI = 0; dI < display.Length; dI++)
             {
                 display[dI] = false;
@@ -141,7 +145,31 @@ namespace chip8SFML
 
             dispPixel = new RectangleShape(new Vector2f(1 * scale, 1 * scale));
             dispPixel.FillColor = dispOn;
+            cpu.InitDisplay(ref display);
+
+            /*
+            //draw 2 2pixel lines 1 pixel apart
+            display[1 + (0 * 128)] = true;
+            display[1 + (1 * 128)] = true;
+            display[3 + (0 * 128)] = true;
+            display[3 + (1 * 128)] = true;
+            */
+
             SystemMsg("Display initialized.");
+
+            SystemMsg("Loading ROM . . .");
+            string romName = "IBM Logo.ch8";
+            try
+            {
+                cpu.LoadROM(romName);
+            }
+            catch (Exception e)
+            {
+                ErrorMsg($"Unable to load rom: {romName}.  \n{e.Message}");
+                Console.ReadKey(true);
+                Environment.Exit(0);
+            }
+            SystemMsg($"Loaded rom: {romName}");
         }
 
         /// <summary>
@@ -153,6 +181,23 @@ namespace chip8SFML
             {
                 window.DispatchEvents();
                 window.Clear(Color.Black);
+
+                if (frames == 0)
+                {
+                    cpu.EmulateCycle();
+                    frames = fpu; //this is to limit how fast the emulator runs
+                }
+                else
+                {
+                    frames--;
+                }
+
+                if(cpu.GetMessage() != "")
+                {
+                    CPUMsg(cpu.GetMessage());
+                    cpu.SetMessage(""); //we displayed the error so clear it.
+                        
+                }
 
                 F12pressed = Keyboard.IsKeyPressed(Keyboard.Key.F12);
                 F4pressed = Keyboard.IsKeyPressed(Keyboard.Key.F4);
@@ -184,11 +229,11 @@ namespace chip8SFML
 
 
                 //Draw the display
-                for (int y = 0; y < 32; y++)
+                for (int y = 0; y < height; y++)
                 {
-                    for (int x = 0; x < 64; x++)
+                    for (int x = 0; x < width; x++)
                     {
-                        if (display[(y*64)+x])
+                        if (display[(y*width)+x])
                         {
                             dispPixel.Position = new Vector2f(x * scale, y * scale);
                             window.Draw(dispPixel);
@@ -230,7 +275,7 @@ namespace chip8SFML
 
                     //TODO: draw strings to represent ram here
                     string posString = (pos + 416) == 4096 ? "4095" : (pos + 416).ToString();
-                    Text posText = new Text(str: "pos:" + pos.ToString() + ":" + posString, font: rvFont, characterSize: 14);
+                    Text posText = new Text(str: $"pos: {pos.ToString()}: {posString} | PC: {cpu.GetPC()}" , font: rvFont, characterSize: 14);
                     Text text = new Text(str: ramOut, font: rvFont, characterSize: 14);
                     text.Color = new Color(red:0x20, green:0xAA, blue:0x20);
                     ramViewWin.Draw(text);
