@@ -85,14 +85,15 @@ namespace chip8SFML
             0xF0, 0x80, 0xF0, 0x80, 0xF0, // E
             0xF0, 0x80, 0xF0, 0x80, 0x80  // F
         };
+        bool superChip = false;
 
         bool[] display; 
         Color dispOff = Color.Black;
         Color dispOn = Color.White;
         RectangleShape dispPixel;
 
-        int frames = 60;
-        int fpu = 60;
+        int frames = 1;
+        int fpu = 1;
 
         public Emu()
         {
@@ -119,6 +120,7 @@ namespace chip8SFML
             SystemMsg("Setting up CPU ...");
             cpu = new CPU();
             cpu.InitRAM(ref ram);
+            cpu.SetSCHIP(ref superChip);
             SystemMsg("Done");
 
             //initialize ram
@@ -158,7 +160,7 @@ namespace chip8SFML
             SystemMsg("Display initialized.");
 
             SystemMsg("Loading ROM . . .");
-            string romName = "IBM Logo.ch8";
+            string romName = "Breakout.ch8";
             try
             {
                 cpu.LoadROM(romName);
@@ -186,18 +188,20 @@ namespace chip8SFML
                 {
                     cpu.EmulateCycle();
                     frames = fpu; //this is to limit how fast the emulator runs
+                    
+                    if (cpu.GetMessage() != "")
+                    {
+                        CPUMsg(cpu.GetMessage());
+                        cpu.SetMessage(""); //we displayed the error so clear it.
+
+                    }
                 }
                 else
                 {
                     frames--;
                 }
 
-                if(cpu.GetMessage() != "")
-                {
-                    CPUMsg(cpu.GetMessage());
-                    cpu.SetMessage(""); //we displayed the error so clear it.
-                        
-                }
+                
 
                 F12pressed = Keyboard.IsKeyPressed(Keyboard.Key.F12);
                 F4pressed = Keyboard.IsKeyPressed(Keyboard.Key.F4);
@@ -226,7 +230,154 @@ namespace chip8SFML
                     }
                 }
 
+                #region chip8Input
 
+                //chip8 input
+                if (Keyboard.IsKeyPressed(N0))
+                {
+                    cpu.SetPressed(0, true);
+                }
+                else
+                {
+                    cpu.SetPressed(0, false);
+                }
+
+                if (Keyboard.IsKeyPressed(N1))
+                {
+                    cpu.SetPressed(1, true);
+                }
+                else
+                {
+                    cpu.SetPressed(1, false);
+                }
+
+                if (Keyboard.IsKeyPressed(N2))
+                {
+                    cpu.SetPressed(2, true);
+                }
+                else
+                {
+                    cpu.SetPressed(2, false);
+                }
+
+                if (Keyboard.IsKeyPressed(N3))
+                {
+                    cpu.SetPressed(3, true);
+                }
+                else
+                {
+                    cpu.SetPressed(3, false);
+                }
+
+                if (Keyboard.IsKeyPressed(N4))
+                {
+                    cpu.SetPressed(4, true);
+                }
+                else
+                {
+                    cpu.SetPressed(4, false);
+                }
+
+                if (Keyboard.IsKeyPressed(N5))
+                {
+                    cpu.SetPressed(5, true);
+                }
+                else
+                {
+                    cpu.SetPressed(5, false);
+                }
+
+                if (Keyboard.IsKeyPressed(N6))
+                {
+                    cpu.SetPressed(6, true);
+                }
+                else
+                {
+                    cpu.SetPressed(6, false);
+                }
+
+                if (Keyboard.IsKeyPressed(N7))
+                {
+                    cpu.SetPressed(7, true);
+                }
+                else
+                {
+                    cpu.SetPressed(7, false);
+                }
+
+                if (Keyboard.IsKeyPressed(N8))
+                {
+                    cpu.SetPressed(8, true);
+                }
+                else
+                {
+                    cpu.SetPressed(8, false);
+                }
+
+                if (Keyboard.IsKeyPressed(N9))
+                {
+                    cpu.SetPressed(9, true);
+                }
+                else
+                {
+                    cpu.SetPressed(9, false);
+                }
+
+                if (Keyboard.IsKeyPressed(A))
+                {
+                    cpu.SetPressed(0xA, true);
+                }
+                else
+                {
+                    cpu.SetPressed(0xA, false);
+                }
+
+                if (Keyboard.IsKeyPressed(B))
+                {
+                    cpu.SetPressed(0xB, true);
+                }
+                else
+                {
+                    cpu.SetPressed(0xB, false);
+                }
+
+                if (Keyboard.IsKeyPressed(C))
+                {
+                    cpu.SetPressed(0xC, true);
+                }
+                else
+                {
+                    cpu.SetPressed(0xC, false);
+                }
+
+                if (Keyboard.IsKeyPressed(D))
+                {
+                    cpu.SetPressed(0xD, true);
+                }
+                else
+                {
+                    cpu.SetPressed(0xD, false);
+                }
+
+                if (Keyboard.IsKeyPressed(E))
+                {
+                    cpu.SetPressed(0xE, true);
+                }
+                else
+                {
+                    cpu.SetPressed(0xE, false);
+                }
+
+                if (Keyboard.IsKeyPressed(F))
+                {
+                    cpu.SetPressed(0xF, true);
+                }
+                else
+                {
+                    cpu.SetPressed(0xF, false);
+                }
+
+                #endregion
 
                 //Draw the display
                 for (int y = 0; y < height; y++)
@@ -273,12 +424,25 @@ namespace chip8SFML
                     }
 
 
-                    //TODO: draw strings to represent ram here
-                    string posString = (pos + 416) == 4096 ? "4095" : (pos + 416).ToString();
-                    Text posText = new Text(str: $"pos: {pos.ToString()}: {posString} | PC: {cpu.GetPC()}" , font: rvFont, characterSize: 14);
+                    //draw various strings to RAM Viewer
                     Text text = new Text(str: ramOut, font: rvFont, characterSize: 14);
                     text.Color = new Color(red:0x20, green:0xAA, blue:0x20);
                     ramViewWin.Draw(text);
+
+                    string regString = " v0 | v1 | v2 | v3 | v4 | v5 | v6 | v7 | v8 | v9 | VA | VB | VC | VD | VE | VF |\n";
+
+                    for(uint i = 0; i < 16; i++)
+                    {
+                        regString += $" {cpu.GetRegister(i).ToString("X2")} |";
+                    }
+
+                    Text regText = new Text(regString, rvFont, 14);
+                    regText.Color = new Color(0xAA, 0x20, 0x20);
+                    regText.Position = new Vector2f(2.0f, (float)(480 - 48));
+                    ramViewWin.Draw(regText);
+
+                    string posString = (pos + 416) == 4096 ? 4095.ToString("X4") : (pos + 416).ToString("X4");
+                    Text posText = new Text(str: $"pos: {pos.ToString("X4")}: {posString} | PC: {cpu.GetPC().ToString("X4")}", font: rvFont, characterSize: 14);
                     posText.Color = new Color(red: 0x20, green: 0xAA, blue: 0x20);
                     posText.Position = new Vector2f(2.0f, (float)(480-16));
                     ramViewWin.Draw(posText);
@@ -302,6 +466,7 @@ namespace chip8SFML
                 F4wasprsd = F4pressed;
                 PGUPwasprsd = PGUPpressed;
                 PGDNwasprsd = PGDNpressed;
+                Thread.Sleep(16);
             }
         }
 
