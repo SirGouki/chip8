@@ -87,7 +87,8 @@ namespace chip8SFML
         };
         bool superChip = false;
 
-        bool[] display; 
+        //bool[] display;
+        bool[,] display;
         Color dispOff = Color.Black;
         Color dispOn = Color.White;
         RectangleShape dispPixel;
@@ -139,10 +140,15 @@ namespace chip8SFML
             SystemMsg("Ram Initialized.  Font Loaded.");
 
             SystemMsg("Display init beginning");
-            display = new bool[width * height];
-            for(int dI = 0; dI < display.Length; dI++)
+            display = new bool[width, height];
+            for (int dIY = 0; dIY < height; dIY++)
             {
-                display[dI] = false;
+                for (int dIX = 0; dIX < width; dIX++)
+                {
+
+                    display[dIX, dIY] = false;
+
+                }
             }
 
             dispPixel = new RectangleShape(new Vector2f(1 * scale, 1 * scale));
@@ -160,7 +166,7 @@ namespace chip8SFML
             SystemMsg("Display initialized.");
 
             SystemMsg("Loading ROM . . .");
-            string romName = "Breakout.ch8";
+            string romName = "Breakout97.ch8";
             try
             {
                 cpu.LoadROM(romName);
@@ -184,8 +190,8 @@ namespace chip8SFML
                 window.DispatchEvents();
                 window.Clear(Color.Black);
 
-                if (frames == 0)
-                {
+                //if (frames == 0)
+               // {
                     cpu.EmulateCycle();
                     frames = fpu; //this is to limit how fast the emulator runs
                     
@@ -195,11 +201,11 @@ namespace chip8SFML
                         cpu.SetMessage(""); //we displayed the error so clear it.
 
                     }
-                }
-                else
-                {
-                    frames--;
-                }
+                //}
+                //else
+                //{
+                //    frames--;
+                //}
 
                 
 
@@ -384,7 +390,7 @@ namespace chip8SFML
                 {
                     for (int x = 0; x < width; x++)
                     {
-                        if (display[(y*width)+x])
+                        if (display[x,y])
                         {
                             dispPixel.Position = new Vector2f(x * scale, y * scale);
                             window.Draw(dispPixel);

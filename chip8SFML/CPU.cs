@@ -23,7 +23,8 @@ namespace chip8SFML
         byte soundTimer = 0; //counts down when set, 1 per 60 frames. At 1? sounds a beep
         bool debug = false;
         bool disasm = false; //setting this to true will step through the code and disassemble what the program thinks the instruction is.
-        bool[] display;
+        //bool[] display;
+        bool[,] display;
         byte[] v; // Registers V0 through VF; VF is also used for some checks such as carry.
         short I; //index register, used to point at locations in RAM
         string message; //used to send messages to the emu for printing to the console window.
@@ -110,7 +111,7 @@ namespace chip8SFML
         /// This is done so the CPU running the ROM can actually update the display.
         /// </summary>
         /// <param name="newDisplay"></param>
-        public void InitDisplay(ref bool[] newDisplay)
+        public void InitDisplay(ref bool[,] newDisplay)
         {
             display = newDisplay;
         }
@@ -455,9 +456,12 @@ namespace chip8SFML
         private void clearScreen()
         {
             //00E0 - clear screen
-            for (int dI = 0; dI < display.Length; dI++)
+            for (int dIY = 0; dIY < 64; dIY++)
             {
-                display[dI] = false;
+                for (int dIX = 0; dIX < display.Length; dIX++)
+                {
+                    display[dIX, dIY] = false;
+                }
             }
         }
 
@@ -488,36 +492,49 @@ namespace chip8SFML
             //if width and height change, change these
             uint dX = (uint)v[x] % 128; //128 is super chip width
             uint dY = (uint)v[y] % 64;  //64 is super chip height
-            v[0xf] = 0;
+            //v[0xf] = 0;
             
             for (uint dIY = 0; dIY < N; dIY++)
             {
                 byte pixels = ram[I+dIY];
+                v[0xF] = 0;
 
                 for (uint dIX = 0; dIX < 8; dIX++)
                 {
                     //example of draw code
                     //display[x + (y * width)];
 
+                    
+                    /*
+                    bool bitCheck = ((byte)Math.Pow(2, 8 - (dIX + 1)) & pixels) == 0 ? true : false;
 
-                    if (display[(dIX + dX) + ((dIY + dY) * 128)])
+                    if (display[dIX + dX, dIY + dY])
                     {
                         //this pixel will be turning off, set the v[f] to 1 when done
-                        display[(dIX + dX) + ((dIY + dY) * 128)] = ((byte)Math.Pow(2, 8 - (dIX + 1)) & pixels) == 0 ? true : false;
+
+                        message = $"setting {(dIX + dX).ToString("X2")},{(dIY + dY).ToString("X2")} to {bitCheck} and vF to 1";
+                        display[dIX + dX, dIY + dY] = bitCheck;
                         v[0xF] = 1;
+                        
                     }
                     else
                     {
-                        display[(dIX + dX) + ((dIY + dY) * 128)] = ((byte)Math.Pow(2, 8 - (dIX + 1)) & pixels) == 0 ? false : true;
+                        message = $"setting {(dIX + dX).ToString("X2")},{(dIY + dY).ToString("X2")} to {bitCheck}";
+                        display[dIX + dX, dIY + dY] = !bitCheck;
                         //v[0xF] = 0;
                     }
+                    */
 
+                    //test
+                    if((ram[I + dIY] & (0x80 >> (int)dIX)) != 0)
+                    {
+                        v[0xF] |= (display[dIX + dX, dIY + dY]) ? (byte)1 : (byte)0;
+                        display[dIX + dX, dIY + dY] ^= true;
+                    }
 
                     if (dIX+dX > 127) break;
                 }
-                if (dIY+dY > 63) break;
-
-                
+                if (dIY+dY > 63) break; 
             }
         }
 
@@ -749,7 +766,14 @@ namespace chip8SFML
 
         private void getChar(byte x)
         {
-            I = (byte)((v[x] * 0xF)+0x32);
+            if(v[x] > 0xF)
+            {
+
+            }
+
+
+            //I = (byte)((v[x] & 0xF) + 0x32);
+            I = (byte)((v[x] * 5) + 0x32);
         }
 
         private void storeBCD(byte x)
