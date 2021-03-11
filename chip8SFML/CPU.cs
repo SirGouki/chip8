@@ -146,10 +146,7 @@ namespace chip8SFML
         public void EmulateCycle()
         {
             Fetch();
-        }
 
-        private void Fetch()
-        {
             if (delayTimer > 0)
             {
                 delayTimer--;
@@ -158,8 +155,14 @@ namespace chip8SFML
             if (soundTimer > 0)
             {
                 soundTimer--;
-                message = "BEEP!";
+                //debug message for no sound implementation
+                //message = "BEEP!";
             }
+        }
+
+        private void Fetch()
+        {
+            
 
             //get 2 bytes, sent the instruction to Decode()
             byte lo, hi;
@@ -458,7 +461,7 @@ namespace chip8SFML
             //00E0 - clear screen
             for (int dIY = 0; dIY < 64; dIY++)
             {
-                for (int dIX = 0; dIX < display.Length; dIX++)
+                for (int dIX = 0; dIX < 128; dIX++)
                 {
                     display[dIX, dIY] = false;
                 }
@@ -492,19 +495,19 @@ namespace chip8SFML
             //if width and height change, change these
             uint dX = (uint)v[x] % 128; //128 is super chip width
             uint dY = (uint)v[y] % 64;  //64 is super chip height
-            //v[0xf] = 0;
-            
+            v[0xf] = 0;
+
             for (uint dIY = 0; dIY < N; dIY++)
             {
-                byte pixels = ram[I+dIY];
-                v[0xF] = 0;
+                byte pixels = ram[I + dIY];
+                //v[0xF] = 0;
 
                 for (uint dIX = 0; dIX < 8; dIX++)
                 {
                     //example of draw code
                     //display[x + (y * width)];
 
-                    
+
                     /*
                     bool bitCheck = ((byte)Math.Pow(2, 8 - (dIX + 1)) & pixels) == 0 ? true : false;
 
@@ -512,29 +515,29 @@ namespace chip8SFML
                     {
                         //this pixel will be turning off, set the v[f] to 1 when done
 
-                        message = $"setting {(dIX + dX).ToString("X2")},{(dIY + dY).ToString("X2")} to {bitCheck} and vF to 1";
+                        //message = $"setting {(dIX + dX).ToString("X2")},{(dIY + dY).ToString("X2")} to {bitCheck} and vF to 1";
                         display[dIX + dX, dIY + dY] = bitCheck;
                         v[0xF] = 1;
                         
                     }
                     else
                     {
-                        message = $"setting {(dIX + dX).ToString("X2")},{(dIY + dY).ToString("X2")} to {bitCheck}";
+                        //message = $"setting {(dIX + dX).ToString("X2")},{(dIY + dY).ToString("X2")} to {bitCheck}";
                         display[dIX + dX, dIY + dY] = !bitCheck;
                         //v[0xF] = 0;
-                    }
-                    */
+                    }*/
+
 
                     //test
-                    if((ram[I + dIY] & (0x80 >> (int)dIX)) != 0)
+                    if ((ram[I + dIY] & (0x80 >> (int)dIX)) != 0)
                     {
                         v[0xF] |= (display[dIX + dX, dIY + dY]) ? (byte)1 : (byte)0;
                         display[dIX + dX, dIY + dY] ^= true;
                     }
 
-                    if (dIX+dX > 127) break;
+                    if (dIX + dX > 127) break;
                 }
-                if (dIY+dY > 63) break; 
+                if (dIY + dY > 63) break;
             }
         }
 
@@ -564,8 +567,8 @@ namespace chip8SFML
         {
             bool setCarry = false;
 
-            if (v[x] + v[y] > 255)  setCarry = true;
-            
+            if (v[x] + v[y] > 255) setCarry = true;
+
             v[x] += v[y];
 
             v[0xF] = (byte)((setCarry) ? 1 : 0);
@@ -591,7 +594,7 @@ namespace chip8SFML
             bool setCarry = false;
 
             if (v[x] > v[y]) setCarry = true;
-            
+
             v[x] -= v[y];
 
             v[0xF] = (byte)((setCarry) ? 1 : 0);
@@ -600,9 +603,9 @@ namespace chip8SFML
         private void setVSubYX(byte x, byte y)
         {
             bool setCarry = false;
-            if (v[y] > v[x]) 
+            if (v[y] > v[x])
                 setCarry = true;
-            
+
 
             v[x] = (byte)(v[y] - v[x]);
 
@@ -766,13 +769,11 @@ namespace chip8SFML
 
         private void getChar(byte x)
         {
-            if(v[x] > 0xF)
+            if (v[x] > 0xF)
             {
 
             }
 
-
-            //I = (byte)((v[x] & 0xF) + 0x32);
             I = (byte)((v[x] * 5) + 0x32);
         }
 
@@ -795,9 +796,9 @@ namespace chip8SFML
             if (x > 16) x = 16;
 
             //store from v0 to vx INCLUSIVE into ram at I+index
-            if(superChip)
-            {   
-                for(int i = 0; i <= x; i++)
+            if (superChip)
+            {
+                for (int i = 0; i <= x; i++)
                 {
                     ram[I + i] = v[i];
                 }
@@ -805,7 +806,7 @@ namespace chip8SFML
             else
             {
                 //do the same thing, but increment I instead of using the iterator
-                for(int i = 0; i <= x; i++)
+                for (int i = 0; i <= x; i++)
                 {
                     ram[I] = v[i];
                     I++;
@@ -834,6 +835,17 @@ namespace chip8SFML
                     I++;
                 }
             }
+        }
+
+
+        public int DelayTimer
+        {
+            get { return delayTimer; }
+        }
+
+        public int SoundTimer
+        {
+            get { return soundTimer; }
         }
     }
 }

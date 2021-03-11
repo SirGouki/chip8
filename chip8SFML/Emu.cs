@@ -7,6 +7,7 @@ using SFML.Audio;
 using System.Threading.Tasks;
 using System.Threading;
 using SFML.System;
+using SFML.Audio;
 
 namespace chip8SFML
 {
@@ -15,6 +16,8 @@ namespace chip8SFML
         //emu flags
         bool debug = true;
         bool ramView = true;
+        bool playing = false;
+        bool pauseEmu = false;
 
         //keys
         Keyboard.Key F12 = Keyboard.Key.F12;
@@ -93,8 +96,17 @@ namespace chip8SFML
         Color dispOn = Color.White;
         RectangleShape dispPixel;
 
+        //vars to limit emucycle speed
         int frames = 1;
         int fpu = 1;
+
+        //vars for audio - I hope!
+        WaveHeader waveHeader;
+        FormatChunk formatChunk;
+        DataChunk dataChunk;
+        SineGenerator sineGenerator;
+        SoundBuffer soundBuffer;
+        Sound sound;
 
         public Emu()
         {
@@ -109,6 +121,7 @@ namespace chip8SFML
             window.Closed += Close;
             ramViewWin.Closed += rvClose;
 
+            //text stuff
             try
             {
                 rvFont = new Font(@"C:\Windows\Fonts\Consola.ttf");
@@ -191,16 +204,59 @@ namespace chip8SFML
                 window.Clear(Color.Black);
 
                 //if (frames == 0)
-               // {
+                // {
+                if (!pauseEmu)
+                {
                     cpu.EmulateCycle();
                     frames = fpu; //this is to limit how fast the emulator runs
-                    
+                    if (cpu.SoundTimer > 0 && !playing)
+                    {
+                        List<Byte> tempBytes = new List<byte>();
+
+                        waveHeader = new WaveHeader();
+                        formatChunk = new FormatChunk();
+                        dataChunk = new DataChunk();
+
+                        sineGenerator = new SineGenerator(697.0f, 44100, (ushort)cpu.SoundTimer);
+
+                        //AddSampleDate(leftData, rightData);
+                        dataChunk.AddSampleData(sineGenerator.Data, sineGenerator.Data);
+                        waveHeader.FileLength += formatChunk.Length() + dataChunk.Length();
+
+                        tempBytes.AddRange(waveHeader.GetBytes());
+                        tempBytes.AddRange(formatChunk.GetBytes());
+                        tempBytes.AddRange(dataChunk.GetBytes());
+
+                        byte[] sBuffer;
+                        sBuffer = tempBytes.ToArray();
+
+                        //play a beep sound.
+                        //CPUMsg("BEEP!");
+                        soundBuffer = new SoundBuffer(sBuffer);
+
+                        sound = new Sound(soundBuffer);
+                        sound.Play();
+                        playing = true;
+                    }
+                    else
+                    {
+                        if(playing == true && ((cpu.SoundTimer == 0)))
+                        {
+                            //only do this if playing was true;
+
+                            playing = false;
+                            sound.Stop();
+                        }
+
+                    }
+
                     if (cpu.GetMessage() != "")
                     {
                         CPUMsg(cpu.GetMessage());
                         cpu.SetMessage(""); //we displayed the error so clear it.
 
                     }
+                }
                 //}
                 //else
                 //{
