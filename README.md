@@ -2,19 +2,19 @@
 A chip 8 emulator using C# and SFML.
 
 # Compiling
-Currently, until I figured out how to fix it, you must create a new C# Core 3.1 console project, and import these files into it to compile.
-This also requires using NuGet Package Manager to install the requirements to that project (which should only be SFML.NET v2.5 from Laurent Gomila)
+Currently, until I figured out how to fix it, you must create a new C# Core 3.1 console project, and import these files into it to compile.  
+This also requires using NuGet Package Manager to install the requirements to that project (which should only be SFML.NET v2.5 from Laurent Gomila)  
 
 # Loading a ROM
-place the .ch8 file in the same folder as your .exe
-Change line 185 in Emu.cs:
+place the .ch8 file in the same folder as your .exe  
+Change line 185 in Emu.cs:  
 ```csharp
-	string romName = "romName.ch8";
+string romName = "romName.ch8";
 ```
 Recompile and run the .exe
 
 # Controls
-Chip8: 
+Chip8:   
 keyboard - chip8 keypad  
 1 2 3 4  - 1 2 3 C  
 q w e r  - 4 5 6 D  
