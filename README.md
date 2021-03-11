@@ -14,12 +14,14 @@ string romName = "romName.ch8";
 Recompile and run the .exe
 
 # Controls
-Chip8:   
+Chip8:
+```   
 keyboard - chip8 keypad  
 1 2 3 4  - 1 2 3 C  
 q w e r  - 4 5 6 D  
 a s d f  - 7 8 9 E  
 z x c v  - A 0 B F  
+```
 Note that these can (and usually should) be held down.
 
 
