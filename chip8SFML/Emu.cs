@@ -40,6 +40,7 @@ namespace chip8SFML
         Keyboard.Key N0 = Keyboard.Key.X;
         Keyboard.Key B = Keyboard.Key.C;
         Keyboard.Key F = Keyboard.Key.V;
+        Keyboard.Key P = Keyboard.Key.P;
 
 
         //These flags are to ensure holding down a key doesn't act as holding it down
@@ -51,6 +52,8 @@ namespace chip8SFML
         bool PGUPwasprsd = false;
         bool PGDNpressed = false;
         bool PGDNwasprsd = false;
+        bool Ppressed = false;
+        bool Pwasprsd = false;
 
         //vars for ram viewer
         int pos = 0;
@@ -168,14 +171,6 @@ namespace chip8SFML
             dispPixel.FillColor = dispOn;
             cpu.InitDisplay(ref display);
 
-            /*
-            //draw 2 2pixel lines 1 pixel apart
-            display[1 + (0 * 128)] = true;
-            display[1 + (1 * 128)] = true;
-            display[3 + (0 * 128)] = true;
-            display[3 + (1 * 128)] = true;
-            */
-
             SystemMsg("Display initialized.");
 
             SystemMsg("Loading ROM . . .");
@@ -263,184 +258,189 @@ namespace chip8SFML
                 //    frames--;
                 //}
 
-                
 
-                F12pressed = Keyboard.IsKeyPressed(Keyboard.Key.F12);
-                F4pressed = Keyboard.IsKeyPressed(Keyboard.Key.F4);
-                PGUPpressed = Keyboard.IsKeyPressed(Keyboard.Key.PageUp);
-                PGDNpressed = Keyboard.IsKeyPressed(Keyboard.Key.PageDown);
-
-
-                if (F4pressed && !F4wasprsd)
+                if (window.HasFocus() ||(ramViewWin.IsOpen ? ramViewWin.HasFocus() : false))
                 {
+                    F12pressed = Keyboard.IsKeyPressed(Keyboard.Key.F12);
+                    F4pressed = Keyboard.IsKeyPressed(Keyboard.Key.F4);
                     
-                    Close(this, EventArgs.Empty);
-                    break;
-                }
+                    Ppressed = Keyboard.IsKeyPressed(P);
 
-                if(F12pressed && !F12wasprsd)
-                {
-                    if (ramViewWin.IsOpen)
+                    if (Ppressed && !Pwasprsd)
                     {
-                        rvClose(this, EventArgs.Empty);
+                        pauseEmu = !pauseEmu;
+                    }
+
+                    if (F4pressed && !F4wasprsd)
+                    {
+
+                        Close(this, EventArgs.Empty);
+                        break;
+                    }
+
+                    if (F12pressed && !F12wasprsd)
+                    {
+                        if (ramViewWin.IsOpen)
+                        {
+                            rvClose(this, EventArgs.Empty);
+                        }
+                        else
+                        {
+                            DebugMsg("Ram Viewer Opened");
+                            ramViewWin = new RenderWindow(rvMode, "Ram Viewer");
+                            ramViewWin.Position = new Vector2i((int)(window.Position.X + (width * scale) + 2), window.Position.Y);
+                        }
+                    }
+
+                    #region chip8Input
+
+                    //chip8 input
+                    if (Keyboard.IsKeyPressed(N0))
+                    {
+                        cpu.SetPressed(0, true);
                     }
                     else
                     {
-                        DebugMsg("Ram Viewer Opened");
-                        ramViewWin = new RenderWindow(rvMode, "Ram Viewer");
-                        ramViewWin.Position = new Vector2i((int)(window.Position.X + (width * scale) + 2), window.Position.Y);
+                        cpu.SetPressed(0, false);
                     }
-                }
 
-                #region chip8Input
+                    if (Keyboard.IsKeyPressed(N1))
+                    {
+                        cpu.SetPressed(1, true);
+                    }
+                    else
+                    {
+                        cpu.SetPressed(1, false);
+                    }
 
-                //chip8 input
-                if (Keyboard.IsKeyPressed(N0))
-                {
-                    cpu.SetPressed(0, true);
-                }
-                else
-                {
-                    cpu.SetPressed(0, false);
-                }
+                    if (Keyboard.IsKeyPressed(N2))
+                    {
+                        cpu.SetPressed(2, true);
+                    }
+                    else
+                    {
+                        cpu.SetPressed(2, false);
+                    }
 
-                if (Keyboard.IsKeyPressed(N1))
-                {
-                    cpu.SetPressed(1, true);
-                }
-                else
-                {
-                    cpu.SetPressed(1, false);
-                }
+                    if (Keyboard.IsKeyPressed(N3))
+                    {
+                        cpu.SetPressed(3, true);
+                    }
+                    else
+                    {
+                        cpu.SetPressed(3, false);
+                    }
 
-                if (Keyboard.IsKeyPressed(N2))
-                {
-                    cpu.SetPressed(2, true);
-                }
-                else
-                {
-                    cpu.SetPressed(2, false);
-                }
+                    if (Keyboard.IsKeyPressed(N4))
+                    {
+                        cpu.SetPressed(4, true);
+                    }
+                    else
+                    {
+                        cpu.SetPressed(4, false);
+                    }
 
-                if (Keyboard.IsKeyPressed(N3))
-                {
-                    cpu.SetPressed(3, true);
-                }
-                else
-                {
-                    cpu.SetPressed(3, false);
-                }
+                    if (Keyboard.IsKeyPressed(N5))
+                    {
+                        cpu.SetPressed(5, true);
+                    }
+                    else
+                    {
+                        cpu.SetPressed(5, false);
+                    }
 
-                if (Keyboard.IsKeyPressed(N4))
-                {
-                    cpu.SetPressed(4, true);
-                }
-                else
-                {
-                    cpu.SetPressed(4, false);
-                }
+                    if (Keyboard.IsKeyPressed(N6))
+                    {
+                        cpu.SetPressed(6, true);
+                    }
+                    else
+                    {
+                        cpu.SetPressed(6, false);
+                    }
 
-                if (Keyboard.IsKeyPressed(N5))
-                {
-                    cpu.SetPressed(5, true);
-                }
-                else
-                {
-                    cpu.SetPressed(5, false);
-                }
+                    if (Keyboard.IsKeyPressed(N7))
+                    {
+                        cpu.SetPressed(7, true);
+                    }
+                    else
+                    {
+                        cpu.SetPressed(7, false);
+                    }
 
-                if (Keyboard.IsKeyPressed(N6))
-                {
-                    cpu.SetPressed(6, true);
-                }
-                else
-                {
-                    cpu.SetPressed(6, false);
-                }
+                    if (Keyboard.IsKeyPressed(N8))
+                    {
+                        cpu.SetPressed(8, true);
+                    }
+                    else
+                    {
+                        cpu.SetPressed(8, false);
+                    }
 
-                if (Keyboard.IsKeyPressed(N7))
-                {
-                    cpu.SetPressed(7, true);
-                }
-                else
-                {
-                    cpu.SetPressed(7, false);
-                }
+                    if (Keyboard.IsKeyPressed(N9))
+                    {
+                        cpu.SetPressed(9, true);
+                    }
+                    else
+                    {
+                        cpu.SetPressed(9, false);
+                    }
 
-                if (Keyboard.IsKeyPressed(N8))
-                {
-                    cpu.SetPressed(8, true);
-                }
-                else
-                {
-                    cpu.SetPressed(8, false);
-                }
+                    if (Keyboard.IsKeyPressed(A))
+                    {
+                        cpu.SetPressed(0xA, true);
+                    }
+                    else
+                    {
+                        cpu.SetPressed(0xA, false);
+                    }
 
-                if (Keyboard.IsKeyPressed(N9))
-                {
-                    cpu.SetPressed(9, true);
-                }
-                else
-                {
-                    cpu.SetPressed(9, false);
-                }
+                    if (Keyboard.IsKeyPressed(B))
+                    {
+                        cpu.SetPressed(0xB, true);
+                    }
+                    else
+                    {
+                        cpu.SetPressed(0xB, false);
+                    }
 
-                if (Keyboard.IsKeyPressed(A))
-                {
-                    cpu.SetPressed(0xA, true);
-                }
-                else
-                {
-                    cpu.SetPressed(0xA, false);
-                }
+                    if (Keyboard.IsKeyPressed(C))
+                    {
+                        cpu.SetPressed(0xC, true);
+                    }
+                    else
+                    {
+                        cpu.SetPressed(0xC, false);
+                    }
 
-                if (Keyboard.IsKeyPressed(B))
-                {
-                    cpu.SetPressed(0xB, true);
-                }
-                else
-                {
-                    cpu.SetPressed(0xB, false);
-                }
+                    if (Keyboard.IsKeyPressed(D))
+                    {
+                        cpu.SetPressed(0xD, true);
+                    }
+                    else
+                    {
+                        cpu.SetPressed(0xD, false);
+                    }
 
-                if (Keyboard.IsKeyPressed(C))
-                {
-                    cpu.SetPressed(0xC, true);
-                }
-                else
-                {
-                    cpu.SetPressed(0xC, false);
-                }
+                    if (Keyboard.IsKeyPressed(E))
+                    {
+                        cpu.SetPressed(0xE, true);
+                    }
+                    else
+                    {
+                        cpu.SetPressed(0xE, false);
+                    }
 
-                if (Keyboard.IsKeyPressed(D))
-                {
-                    cpu.SetPressed(0xD, true);
-                }
-                else
-                {
-                    cpu.SetPressed(0xD, false);
-                }
+                    if (Keyboard.IsKeyPressed(F))
+                    {
+                        cpu.SetPressed(0xF, true);
+                    }
+                    else
+                    {
+                        cpu.SetPressed(0xF, false);
+                    }
 
-                if (Keyboard.IsKeyPressed(E))
-                {
-                    cpu.SetPressed(0xE, true);
+                    #endregion
                 }
-                else
-                {
-                    cpu.SetPressed(0xE, false);
-                }
-
-                if (Keyboard.IsKeyPressed(F))
-                {
-                    cpu.SetPressed(0xF, true);
-                }
-                else
-                {
-                    cpu.SetPressed(0xF, false);
-                }
-
-                #endregion
-
                 //Draw the display
                 for (int y = 0; y < height; y++)
                 {
@@ -463,7 +463,7 @@ namespace chip8SFML
                     ramViewWin.DispatchEvents();
                     ramViewWin.Clear(Color.Black);
 
-                    for(int rI = pos; rI < pos+416; rI ++) //416 is the amount of bytes i can display, 417 is to make sure it doesn't cut off the last byte
+                    for(int rI = pos; rI < pos+416; rI ++) //416 is the amount of bytes the RAM view can display without running over other info
                     {
                         ramOut += ram[rI].ToString("X2") + " | ";
                         if((rI+1) % 16 == 0)
@@ -472,17 +472,23 @@ namespace chip8SFML
                         }
                     }
 
-                    if(PGUPpressed && !PGUPwasprsd)
+                    PGUPpressed = Keyboard.IsKeyPressed(Keyboard.Key.PageUp);
+                    PGDNpressed = Keyboard.IsKeyPressed(Keyboard.Key.PageDown);
+
+                    if (ramViewWin.HasFocus() || window.HasFocus())
                     {
-                        //scroll the data up
-                        pos -= 416;
-                        if (pos < 0) pos = 0;
-                    }
-                    else if (PGDNpressed && !PGDNwasprsd)
-                    {
-                        //scroll the data down
-                        pos += 416;
-                        if (pos > maxPos) pos = maxPos+1;
+                        if (PGUPpressed && !PGUPwasprsd)
+                        {
+                            //scroll the data up
+                            pos -= 416;
+                            if (pos < 0) pos = 0;
+                        }
+                        else if (PGDNpressed && !PGDNwasprsd)
+                        {
+                            //scroll the data down
+                            pos += 416;
+                            if (pos > maxPos) pos = maxPos + 1;
+                        }
                     }
 
 
@@ -528,6 +534,7 @@ namespace chip8SFML
                 F4wasprsd = F4pressed;
                 PGUPwasprsd = PGUPpressed;
                 PGDNwasprsd = PGDNpressed;
+                Pwasprsd = Ppressed;
                 Thread.Sleep(16);
             }
         }
