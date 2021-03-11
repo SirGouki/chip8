@@ -35,8 +35,6 @@ P  - pause the emulator.  This literally just prevents cpu.EmulatorCycle() from 
 	WARNING: the way this is currently implemented, this *should* cause a sound that's played  
 	to play again after unpausing, if soundTimer was > 0 when pausing.  
 
-
-
 # Current Version
 Implemented some classes to programmatically generate a byte array that contains a wav sound.  
 Implemented a class to generate a sine wave.  
@@ -47,3 +45,15 @@ Sound is played through SFML functions, not the .NET builtin system functions.
 Known issues:  
 Collision is wonky on breakout (1979 version), the ball will sometimes collide with blocks that   
 have been removed and put blocks in their place.
+
+# Credits
+ * https://www.codeguru.com/columns/dotnet/making-sounds-with-waves-using-c.html  
+	source for the sound classes that I used to generate a wav to send to SFML
+ * Discord: EmuDev  
+	links to chip8 resources and some guys that helped talk me through some things I was stuck on.  	
+ * https://tobiasvl.github.io/blog/write-a-chip-8-emulator/#00ee-and-2nnn-subroutines  
+	This awesome guide, which did not tell me working code to implement anything, and allowed me  
+	to figure it out for myself.
+ * http://devernay.free.fr/hacks/chip8/C8TECH10.HTM#2.4  
+	This awesome guide, which goes into a bit more detail on how opcodes should function. Also,  
+	from what I've seen, does not provide source code implementations of opcodes.
