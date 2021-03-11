@@ -23,13 +23,12 @@ namespace chip8SFML
         byte soundTimer = 0; //counts down when set, 1 per 60 frames. At 1? sounds a beep
         bool debug = false;
         bool disasm = false; //setting this to true will step through the code and disassemble what the program thinks the instruction is.
-        //bool[] display;
         bool[,] display;
         byte[] v; // Registers V0 through VF; VF is also used for some checks such as carry.
         short I; //index register, used to point at locations in RAM
         string message; //used to send messages to the emu for printing to the console window.
         bool superChip = true;
-        //Dictionary<int, Action> instructions = new Dictionary<int, Action>();
+        Dictionary<int, Delegate> instructions = new Dictionary<int, Delegate>();
 
         bool[] pressed = new bool[16];
 
@@ -41,7 +40,113 @@ namespace chip8SFML
                 pressed[i] = false;
             }
 
+            //load the dictionary
+            //no args
+            instructions[0x00E0] = new Action(clearScreen);
+            instructions[0x00EE] = new Action(ret);
+
+            //1 arg
+            instructions[0xE09E] = new Action<byte>(skipIfPressed);
+            instructions[0xE0A1] = new Action<byte>(skipIfNotPressed);
+            instructions[0xF007] = new Action<byte>(getDelay);
+            instructions[0xF00A] = new Action<byte>(blockInput);
+            instructions[0xF015] = new Action<byte>(setDelay);
+            instructions[0xF018] = new Action<byte>(setSound);
+            instructions[0xF01E] = new Action<byte>(incI);
+            instructions[0xF029] = new Action<byte>(getChar);
+            instructions[0xF033] = new Action<byte>(storeBCD);
+            instructions[0xF055] = new Action<byte>(store);
+            instructions[0xF065] = new Action<byte>(load);
+
+            //2 arg
+            instructions[0x5000] = new Action<byte, byte>(skipIfRegEQ);
+            instructions[0x8000] = new Action<byte, byte>(setV2V);
+            instructions[0x8001] = new Action<byte, byte>(setVOR);
+            instructions[0x8002] = new Action<byte, byte>(setVAND);
+            instructions[0x8003] = new Action<byte, byte>(setVXOR);
+            instructions[0x8004] = new Action<byte, byte>(setVADD);
+            instructions[0x8005] = new Action<byte, byte>(setVSubXY);
+            instructions[0x8006] = new Action<byte, byte>(RightShiftX);
+            instructions[0x8007] = new Action<byte, byte>(setVSubYX);
+            instructions[0x800E] = new Action<byte, byte>(LeftShiftX);
+            instructions[0x9000] = new Action<byte, byte>(skipIfRegNE);
+
+            //3 arg
+            instructions[0x1000] = new Action<byte, byte, byte>(jump);
+            instructions[0x2000] = new Action<byte, byte, byte>(callSub);
+            instructions[0x3000] = new Action<byte, byte, byte>(skipIfEQ);
+            instructions[0x4000] = new Action<byte, byte, byte>(skipIfNE);
+            instructions[0x6000] = new Action<byte, byte, byte>(setV2Value);
+            instructions[0x7000] = new Action<byte, byte, byte>(incV);
+            instructions[0xA000] = new Action<byte, byte, byte>(setI);
+            instructions[0xB000] = new Action<byte, byte, byte>(jumpOffset);
+            instructions[0xC000] = new Action<byte, byte, byte>(rand);
+            instructions[0xD000] = new Action<byte, byte, byte>(draw);
+
             Reset();
+        }
+
+        private void Decode(byte hi, byte lo)
+        {
+            //break down the opcode into its parts
+            byte i = (byte)(hi >> 4 & 0xF);
+            byte x = (byte)(hi & 0xF);
+            byte y = (byte)(lo >> 4 & 0xF);
+            byte N = (byte)(lo & 0xF);
+
+            UInt16 opcode = 0;
+            opcode = (UInt16)(hi << 8 | lo);
+
+            UInt16 nOpcode = 0; //normalized opcode
+
+
+            if (i == 0)
+            {
+                //expected format: 0xIXYN - no args
+                nOpcode = opcode;
+            }
+            else if (i == 0xE || i == 0xF)
+            {
+                //expected format: 0xI0YN - 1 arg
+                nOpcode = (UInt16)((i << 12) | (0 << 8) | (y << 4) | (N));
+            }
+            else if (i == 0x5 || i == 0x8 || i == 0x9)
+            {
+                //expected format: 0xI00N - 2 args
+                nOpcode = (UInt16)((i << 12) | (0 << 8) | (0 << 4) | (N));
+            }
+            else
+            {
+                //expected format: 0xI000 - 3 args
+                nOpcode = (UInt16)((i << 12) | (0 << 8) | (0 << 4) | (0));
+            }
+
+            if (instructions.ContainsKey(nOpcode))
+            {
+                //do it
+                if (i == 0) //no argument opcodes
+                {
+                    instructions[nOpcode].DynamicInvoke();
+                }
+                else if (i == 0xE || i == 0xF) //1 argument opcodes
+                {
+                    instructions[nOpcode].DynamicInvoke(x);
+                }
+                else if (i == 0x5 || i == 0x8 || i == 0x9) //2 argument opcodes
+                {
+                    instructions[nOpcode].DynamicInvoke(x, y);
+                }
+                else //3 argument opcodes
+                {
+                    instructions[nOpcode].DynamicInvoke(x, y, N);
+                }
+            }
+            else
+            {
+                message = $"Error: {opcode.ToString("X4")}  Inavlid opcode";
+            }
+
+            
         }
 
         public void Reset()
@@ -176,275 +281,7 @@ namespace chip8SFML
 
         }
 
-        private void Decode(byte hi, byte lo)
-        {
-            //break down the opcode into its parts
-            byte i = (byte)(hi >> 4 & 0xF);
-            byte x = (byte)(hi & 0xF);
-            byte y = (byte)(lo >> 4 & 0xF);
-            byte N = (byte)(lo & 0xF);
-
-            short opcode = (short)(hi << 8 | lo);
-
-            //for debugging
-            //message = $"Last Opcode: {opcode.ToString("x4")}";
-
-            if (disasm)
-            {
-
-            }
-            else
-            {
-                switch (i)
-                {
-                    case 0x0:
-                    {
-                        switch (x)
-                        {
-                            case 0x0:
-                            {
-                                switch (lo)
-                                {
-                                    case 0xE0:
-                                    {
-                                        clearScreen();
-                                        break;
-                                    }
-                                    case 0xEE:
-                                    {
-                                        ret();
-                                        break;
-                                    }
-                                    default:
-                                    {
-                                        message = $"{opcode.ToString("X4")}: Invalid machine code: {lo.ToString("x2")}";
-                                        break;
-                                    }
-                                }
-                                break;
-                            }
-                            default:
-                            {
-                                message = $"{opcode.ToString("X4")}: Invalid arguement x: {x.ToString("X1")}";
-                                break;
-                            }
-                        }
-                        break;
-                    }
-                    case 0x1:
-                    {
-                        jump(x, y, N);
-                        break;
-                    }
-                    case 0x2:
-                    {
-                        //call subroutine
-                        callSub(x, y, N);
-                        break;
-                    }
-                    case 0x3:
-                    {
-                        //skip if vx == nn
-                        skipIfEQ(x, y, N);
-                        break;
-                    }
-                    case 0x4:
-                    {
-                        //skip if vx != nn
-                        skipIfNE(x, y, N);
-                        break;
-                    }
-                    case 0x5:
-                    {
-                        //skip if vx == vy
-                        skipIfRegEQ(x, y);
-                        break;
-                    }
-                    case 0x6:
-                    {
-                        setV(x, y, N);
-                        break;
-                    }
-                    case 0x7:
-                    {
-                        incV(x, y, N);
-                        break;
-                    }
-                    case 0x8:
-                    {
-                        switch (N)
-                        {
-                            case 0x0:
-                            {
-                                setV(x, y);
-                                break;
-                            }
-                            case 0x1:
-                            {
-                                setVOR(x, y);
-                                break;
-                            }
-                            case 0x2:
-                            {
-                                setVAND(x, y);
-                                break;
-                            }
-                            case 0x3:
-                            {
-                                setVXOR(x, y);
-                                break;
-                            }
-                            case 0x4:
-                            {
-                                setVADD(x, y);
-                                break;
-                            }
-                            case 0x5:
-                            {
-                                setVSubXY(x, y);
-                                break;
-                            }
-                            case 0x6:
-                            {
-                                RightShiftX(x, y);
-                                break;
-                            }
-                            case 0x7:
-                            {
-                                setVSubYX(x, y);
-                                break;
-                            }
-                            case 0xE:
-                            {
-                                LeftShiftX(x, y);
-                                break;
-                            }
-                            default:
-                            {
-                                message = $"Invalid opcode: {opcode.ToString("X4")}";
-                                break;
-                            }
-                        }
-
-                        break;
-                    }
-                    case 0x9:
-                    {
-                        //skip if vx != vy
-                        skipIfRegNE(x, y);
-                        break;
-                    }
-                    case 0xA:
-                    {
-                        setI(x, y, N);
-                        break;
-                    }
-                    case 0xB:
-                    {
-                        jumpOffset(x, y, N);
-                        break;
-                    }
-                    case 0xC:
-                    {
-                        rand(x, y, N);
-                        break;
-                    }
-                    case 0xD:
-                    {
-                        draw(x, y, N);
-                        break;
-                    }
-                    case 0xE:
-                    {
-                        switch (lo)
-                        {
-                            case 0x9e:
-                            {
-                                skipIfPressed(x);
-                                break;
-                            }
-                            case 0xA1:
-                            {
-                                skipIfNotPressed(x);
-                                break;
-                            }
-                            default:
-                            {
-                                message = $"{opcode.ToString("X4")} : Invalid argument {lo.ToString("X2")}";
-                                break;
-                            }
-                        }
-
-                        break;
-                    }
-                    case 0xF:
-                    {
-                        switch (lo)
-                        {
-                            case 0x07:
-                            {
-                                getDelay(x);
-                                break;
-                            }
-                            case 0x0A:
-                            {
-                                blockInput(x);
-                                break;
-                            }
-                            case 0x15:
-                            {
-                                setDelay(x);
-                                break;
-                            }
-                            case 0x18:
-                            {
-                                setSound(x);
-                                break;
-                            }
-                            case 0x1E:
-                            {
-                                incI(x);
-                                break;
-                            }
-                            case 0x29:
-                            {
-                                getChar(x);
-                                break;
-                            }
-                            case 0x33:
-                            {
-                                storeBCD(x);
-                                break;
-                            }
-                            case 0x55:
-                            {
-                                store(x);
-                                break;
-                            }
-                            case 0x65:
-                            {
-                                load(x);
-                                break;
-                            }
-                            default:
-                            {
-                                message = $"{opcode.ToString("X4")} : Invalid argument {lo.ToString("X2")}";
-                                break;
-                            }
-                        }
-
-                        break;
-                    }
-                    default:
-                    {
-                        message = $"Invalid instruction: {opcode.ToString("X4")}";
-                        break;
-                    }
-
-                }
-            }
-
-        }
+        
 
         public void SetMessage(string newmsg)
         {
@@ -547,7 +384,7 @@ namespace chip8SFML
         /// <param name="x"></param>
         /// <param name="y"></param>
         /// <param name="N"></param>
-        private void setV(byte x, byte y, byte N)
+        private void setV2Value(byte x, byte y, byte N)
         {
             //set register Vx to yn
             v[x] = (byte)(y << 4 | N);
@@ -558,7 +395,7 @@ namespace chip8SFML
         /// </summary>
         /// <param name="x"></param>
         /// <param name="y"></param>
-        private void setV(byte x, byte y)
+        private void setV2V(byte x, byte y)
         {
             v[x] = v[y];
         }
@@ -769,11 +606,6 @@ namespace chip8SFML
 
         private void getChar(byte x)
         {
-            if (v[x] > 0xF)
-            {
-
-            }
-
             I = (byte)((v[x] * 5) + 0x32);
         }
 
